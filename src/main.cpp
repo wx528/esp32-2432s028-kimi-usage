@@ -1,11 +1,13 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <time.h>
+#include <XPT2046_Touchscreen.h>
 #include "app_state.h"
 #include "config_validate.h"
 #include "config_store.h"
 #include "kimi_net.h"
 #include "usage_parser.h"
+#include "provider.h"
 #include "display.h"
 #include "portal.h"
 #include "retry_policy.h"
@@ -20,36 +22,56 @@ static const int WIFI_FAIL_TO_PORTAL = 30;
 static const uint8_t BOOT_PIN = 0;
 static const uint32_t BOOT_HOLD_MS = 5000;
 
+// CYD 触摸（XPT2046）走独立 HSPI
+static const uint8_t TOUCH_CS = 33;
+static const uint8_t TOUCH_IRQ = 36;
+static const uint8_t TOUCH_SCK = 25;
+static const uint8_t TOUCH_MISO = 39;
+static const uint8_t TOUCH_MOSI = 32;
+static const uint32_t TOUCH_DEBOUNCE_MS = 300;
+
 static TFT_eSPI tft;
 static AppState s_state = STATE_BOOT;
 static DeviceConfig s_cfg;
 
-static bool s_has_data = false;
-static UsageData s_data;
-static uint32_t s_data_fetched_ms = 0; // millis()，用于算数据年龄
-static bool s_key_invalid = false;
-static const char* s_status_msg = "";
+struct ProviderSlot {
+  bool has_data = false;
+  UsageData data;
+  uint32_t fetched_ms = 0;
+  bool key_invalid = false;
+  const char* status_msg = "";
+  int api_fail_count = 0;
+};
+static ProviderSlot s_slots[2];          // 下标即 Provider 枚举值
+static uint8_t s_active = PROVIDER_KIMI; // 当前显示/定时拉取的 provider
+static SPIClass s_touch_spi(HSPI);
+static XPT2046_Touchscreen s_touch(TOUCH_CS, TOUCH_IRQ);
 static int s_wifi_fail_count = 0;
-static int s_api_fail_count = 0;
 static uint32_t s_last_fetch_ms = 0;
 static long s_next_interval_sec = 60;
 
 static long data_age_seconds() {
-  if (!s_has_data) return 0;
-  return (long)((millis() - s_data_fetched_ms) / 1000UL);
+  const ProviderSlot& s = s_slots[s_active];
+  if (!s.has_data) return 0;
+  return (long)((millis() - s.fetched_ms) / 1000UL);
 }
 
 static void redraw() {
+  const ProviderSlot& s = s_slots[s_active];
   DisplayState st;
   memset(&st, 0, sizeof(st));
-  st.has_data = s_has_data;
-  st.data = s_data;
-  st.stale = s_has_data && (data_age_seconds() > s_next_interval_sec + 15);
+  st.has_data = s.has_data;
+  st.data = s.data;
+  st.stale = s.has_data && (data_age_seconds() > s_next_interval_sec + 15);
   st.age_seconds = data_age_seconds();
   st.clock_valid = net_time_valid();
   st.wifi_ok = (WiFi.status() == WL_CONNECTED);
-  st.status_msg = s_status_msg;
-  st.key_invalid = s_key_invalid;
+  st.status_msg = s.status_msg;
+  st.key_invalid = s.key_invalid;
+  static char title[20];
+  snprintf(title, sizeof(title), "%s USAGE", provider_name((Provider)s_active));
+  st.title = title;
+  st.switch_hint = (s_cfg.provider_mode == MODE_BOTH);
   display_draw_main(&tft, st);
 }
 
@@ -70,39 +92,44 @@ static void enter_connecting() {
   WiFi.begin(s_cfg.ssid, s_cfg.password);
 }
 
-static void fetch_and_update() {
-  s_last_fetch_ms = millis();
-  NetResult r = kimi_fetch_usage(s_cfg.api_key, 10000);
+// 拉取指定 provider 并写入对应槽。仅激活槽的结果会重绘屏幕。
+static void fetch_provider(uint8_t idx) {
+  ProviderSlot& s = s_slots[idx];
+  if (idx == s_active) s_last_fetch_ms = millis();
+  const char* key = idx == PROVIDER_MINIMAX ? s_cfg.minimax_key : s_cfg.api_key;
+  NetResult r = net_fetch_usage((Provider)idx, key, 10000);
   if (r.status == NET_OK) {
     UsageData d;
-    ParseResult pr = parse_usage_json(r.body.c_str(), &d);
+    ParseResult pr = provider_parse((Provider)idx, r.body.c_str(), &d);
     if (pr == PARSE_OK) {
-      s_data = d;
-      s_has_data = true;
-      s_data_fetched_ms = millis();
-      s_key_invalid = false;
-      s_status_msg = "";
-      s_api_fail_count = 0;
-      s_next_interval_sec = s_cfg.refresh_interval;
+      s.data = d;
+      s.has_data = true;
+      s.fetched_ms = millis();
+      s.key_invalid = false;
+      s.status_msg = "";
+      s.api_fail_count = 0;
+      if (idx == s_active) s_next_interval_sec = s_cfg.refresh_interval;
     } else if (pr == PARSE_ERR_KEY_DISABLED) {
-      s_key_invalid = true;
-      s_status_msg = "";
+      s.key_invalid = true;
+      s.status_msg = "";
     } else {
-      s_status_msg = "BAD RESPONSE";
-      s_api_fail_count++;
+      s.status_msg = "BAD RESPONSE";
+      s.api_fail_count++;
     }
   } else if (r.status == NET_ERR_HTTP && (r.http_code == 401 || r.http_code == 498)) {
-    s_key_invalid = true;
-    s_status_msg = "";
+    s.key_invalid = true;
+    s.status_msg = "";
   } else if (r.status == NET_ERR_WIFI) {
-    s_status_msg = "WiFi LOST";
+    s.status_msg = "WiFi LOST";
   } else {
-    s_status_msg = "API TIMEOUT";
-    s_api_fail_count++;
-    s_next_interval_sec = retry_interval_sec(s_cfg.refresh_interval, s_api_fail_count);
+    s.status_msg = "API TIMEOUT";
+    s.api_fail_count++;
+    if (idx == s_active) s_next_interval_sec = retry_interval_sec(s_cfg.refresh_interval, s.api_fail_count);
   }
-  redraw();
+  if (idx == s_active) redraw();
 }
+
+static void fetch_and_update() { fetch_provider(s_active); }
 
 static void hook_refresh() {
   if (s_state == STATE_RUNNING) fetch_and_update();
@@ -110,8 +137,13 @@ static void hook_refresh() {
 static void hook_config_changed() {
   config_store_load(&s_cfg);
   s_next_interval_sec = s_cfg.refresh_interval;
-  s_key_invalid = false;
-  s_api_fail_count = 0;
+  for (int i = 0; i < 2; i++) {
+    s_slots[i].key_invalid = false;
+    s_slots[i].api_fail_count = 0;
+  }
+  // 单 provider 模式下激活项跟随配置
+  if (s_cfg.provider_mode == MODE_KIMI) s_active = PROVIDER_KIMI;
+  if (s_cfg.provider_mode == MODE_MINIMAX) s_active = PROVIDER_MINIMAX;
 }
 static void hook_reset_config() {
   config_store_clear();
@@ -126,6 +158,9 @@ void setup() {
   Serial.println("CYD Kimi Usage Ready");
 
   display_init(&tft);
+  s_touch_spi.begin(TOUCH_SCK, TOUCH_MISO, TOUCH_MOSI, TOUCH_CS);
+  s_touch.begin(s_touch_spi);
+  s_touch.setRotation(0);
 
   SerialHooks hooks{hook_refresh, hook_config_changed, hook_reset_config};
   serial_console_begin(hooks);
@@ -135,8 +170,27 @@ void setup() {
     return;
   }
   config_store_load(&s_cfg);
+  s_active = s_cfg.provider_mode == MODE_MINIMAX ? PROVIDER_MINIMAX : PROVIDER_KIMI;
   s_next_interval_sec = s_cfg.refresh_interval;
   enter_connecting();
+}
+
+static void switch_provider() {
+  s_active = s_active == PROVIDER_KIMI ? PROVIDER_MINIMAX : PROVIDER_KIMI;
+  Serial.printf("OK:SWITCH:%s\n", provider_name((Provider)s_active));
+  redraw();            // 有缓存先转灰显示，无缓存显示 Fetching...
+  fetch_and_update();  // 立刻拉新激活的一家
+}
+
+static void check_touch_switch() {
+  if (s_state != STATE_RUNNING) return;
+  if (s_cfg.provider_mode != MODE_BOTH) return;
+  static uint32_t last_tap = 0;
+  if (!s_touch.touched()) return;
+  uint32_t now = millis();
+  if (now - last_tap < TOUCH_DEBOUNCE_MS) return;
+  last_tap = now;
+  switch_provider();
 }
 
 static void check_boot_long_press() {
@@ -174,6 +228,7 @@ static void check_boot_long_press() {
 void loop() {
   serial_console_poll();
   check_boot_long_press();
+  check_touch_switch();
   uint32_t now = millis();
 
   if (s_state == STATE_CONNECTING) {
@@ -199,7 +254,7 @@ void loop() {
     // WiFi 掉线统计
     if (WiFi.status() != WL_CONNECTED) {
       s_wifi_fail_count++;
-      s_status_msg = "WiFi LOST";
+      s_slots[s_active].status_msg = "WiFi LOST";
       WiFi.reconnect();
       if (s_wifi_fail_count >= WIFI_FAIL_TO_PORTAL) {
         enter_portal();
@@ -212,7 +267,7 @@ void loop() {
     s_wifi_fail_count = 0;
 
     // 到点拉取
-    if (!s_key_invalid && now - s_last_fetch_ms >= (uint32_t)s_next_interval_sec * 1000UL) {
+    if (!s_slots[s_active].key_invalid && now - s_last_fetch_ms >= (uint32_t)s_next_interval_sec * 1000UL) {
       fetch_and_update();
     }
 
