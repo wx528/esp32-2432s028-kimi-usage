@@ -45,6 +45,20 @@ On Linux/macOS use `.venv/bin/pio` instead, and set `upload_port`/`monitor_port`
 3. Fill in WiFi credentials, Kimi API key, and refresh interval (30–3600 s), then save
 4. The device verifies WiFi + API key on the spot and only persists the config if both pass, then reboots
 
+## Changing Configuration Later
+
+**Via serial** (keeps other settings, fastest):
+
+```powershell
+python scripts/send_command.py "SET:KEY:sk-new-key"      --port COM7
+python scripts/send_command.py "SET:WIFI:new-ssid:pass"  --port COM7
+python scripts/send_command.py "REBOOT"                  --port COM7  # recommended after SET:WIFI
+```
+
+A new API key takes effect immediately; send `REBOOT` after `SET:WIFI` to reconnect on the new network.
+
+**Via BOOT button** (full re-provisioning): hold BOOT for 5 s until the on-screen countdown finishes — the config is wiped and the device reboots into Setup mode (release early to cancel). Then repeat the phone setup flow.
+
 ## Serial Backdoor (115200 baud, `\n`-terminated)
 
 | Command | Action |

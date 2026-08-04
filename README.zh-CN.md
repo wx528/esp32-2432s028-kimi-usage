@@ -45,6 +45,20 @@ Linux/macOS 把 `.venv\Scripts\pio.exe` 换成 `.venv/bin/pio`，并在 `platfor
 3. 填 WiFi、Kimi API Key、刷新间隔（30–3600 秒），保存
 4. 设备当场验证 WiFi + API Key，全部通过才写入并重启
 
+## 重新配置
+
+**串口命令**（不丢其他配置，最快）：
+
+```powershell
+python scripts/send_command.py "SET:KEY:sk-新key"        --port COM7
+python scripts/send_command.py "SET:WIFI:新ssid:新密码"   --port COM7
+python scripts/send_command.py "REBOOT"                  --port COM7  # 改 WiFi 后建议执行
+```
+
+改 key 立即生效；改 WiFi 后发 `REBOOT` 确保用新网络重连。
+
+**长按 BOOT 5 秒**（全量重配）：按住到屏幕倒数结束，擦除全部配置并重启进 Setup 模式（中途松手可取消），然后重新走一遍手机配网流程。
+
 ## 串口后门（115200，`\n` 结尾）
 
 | 命令 | 作用 |
