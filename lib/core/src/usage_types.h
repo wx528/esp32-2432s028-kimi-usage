@@ -16,5 +16,6 @@ enum ParseResult : uint8_t {
   PARSE_ERR_JSON,       // 不是合法 JSON
   PARSE_ERR_MISSING,    // 缺少必要字段
   PARSE_ERR_BAD_VALUE,  // 字段值类型/格式不对
-  PARSE_ERR_KEY_DISABLED // boosterWallet.status == STATUS_DISABLED
+  PARSE_ERR_KEY_DISABLED, // boosterWallet.status == STATUS_DISABLED
+  PARSE_ERR_API           // 提供商业务层报错（如 MiniMax base_resp.status_code != 0）
 };
