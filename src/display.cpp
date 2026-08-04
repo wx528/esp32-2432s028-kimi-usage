@@ -109,8 +109,6 @@ void display_draw_main(TFT_eSPI* tft, const DisplayState& st) {
     UsageLevel lv = st.stale ? LEVEL_NORMAL : usage_level(pct);
     draw_ring(tft, pct, lv);
 
-    char num[24];
-    format_thousands(pct, num, sizeof(num));
     char pctStr[8];
     snprintf(pctStr, sizeof(pctStr), "%d%%", pct);
     tft->setTextColor(st.stale ? TFT_DARKGREY : level_color(lv), BG);
@@ -138,8 +136,10 @@ void display_draw_main(TFT_eSPI* tft, const DisplayState& st) {
     tft->drawFastHLine(12, 248, 216, TFT_DARKGREY);
 
     // 5H 窗口
+    tft->setTextDatum(ML_DATUM);
     tft->setTextColor(TFT_YELLOW, BG);
     tft->drawString("5H WINDOW", 12, 258, 2);
+    tft->setTextDatum(MC_DATUM);
     int wpct = usage_percent(st.data.window_used, st.data.window_limit);
     int barW = 216;
     int fillW = (wpct * barW) / 100;
