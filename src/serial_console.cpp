@@ -17,12 +17,19 @@ void serial_console_begin(const SerialHooks& hooks) {
 static void print_config() {
   DeviceConfig c;
   config_store_load(&c);
-  char masked[32];
+  char masked[32], masked_mm[32];
   mask_api_key(c.api_key, masked, sizeof(masked));
+  mask_api_key(c.minimax_key, masked_mm, sizeof(masked_mm));
+  const char* mode = c.provider_mode == MODE_MINIMAX ? "minimax"
+                   : c.provider_mode == MODE_BOTH ? "both" : "kimi";
   Serial.print("OK:CONFIG:{\"ssid\":\"");
   Serial.print(c.ssid);
   Serial.print("\",\"key\":\"");
   Serial.print(masked);
+  Serial.print("\",\"mmkey\":\"");
+  Serial.print(masked_mm);
+  Serial.print("\",\"mode\":\"");
+  Serial.print(mode);
   Serial.print("\",\"interval\":");
   Serial.print(c.refresh_interval);
   Serial.println("}");
@@ -58,6 +65,24 @@ static void execute(const Command& cmd) {
       c.refresh_interval = cmd.interval;
       config_store_save(&c);
       Serial.println("OK:SET:INTERVAL");
+      if (s_hooks.on_config_changed) s_hooks.on_config_changed();
+      break;
+    }
+    case CMD_SET_PROVIDER: {
+      DeviceConfig c;
+      config_store_load(&c);
+      c.provider_mode = cmd.provider_mode;
+      config_store_save(&c);
+      Serial.println("OK:SET:PROVIDER");
+      if (s_hooks.on_config_changed) s_hooks.on_config_changed();
+      break;
+    }
+    case CMD_SET_MMKEY: {
+      DeviceConfig c;
+      config_store_load(&c);
+      strncpy(c.minimax_key, cmd.mmkey, sizeof(c.minimax_key) - 1); c.minimax_key[sizeof(c.minimax_key)-1] = '\0';
+      config_store_save(&c);
+      Serial.println("OK:SET:MMKEY");
       if (s_hooks.on_config_changed) s_hooks.on_config_changed();
       break;
     }
