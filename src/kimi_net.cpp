@@ -1,11 +1,11 @@
 #include "kimi_net.h"
 #include "root_ca.h"
+#include "provider.h"
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <WiFiClientSecure.h>
 #include <time.h>
 
-static const char* USAGE_URL = "https://api.kimi.com/coding/v1/usages";
 static bool s_ntp_started = false;
 
 void net_time_begin() {
@@ -29,7 +29,7 @@ bool net_time_wait(uint32_t timeout_ms) {
   return net_time_valid();
 }
 
-NetResult kimi_fetch_usage(const char* api_key, uint32_t timeout_ms) {
+NetResult net_fetch_usage(Provider p, const char* api_key, uint32_t timeout_ms) {
   NetResult r;
   r.status = NET_OK;
   r.http_code = 0;
@@ -43,14 +43,14 @@ NetResult kimi_fetch_usage(const char* api_key, uint32_t timeout_ms) {
 
   WiFiClientSecure client;
   if (r.clock_valid) {
-    client.setCACert(ROOT_CA_PEM);
+    client.setCACert(p == PROVIDER_MINIMAX ? MINIMAX_ROOT_CA_PEM : ROOT_CA_PEM);
   } else {
     client.setInsecure(); // 未对时降级，屏幕用 ! 标注
   }
 
   HTTPClient http;
   http.setTimeout(timeout_ms);
-  if (!http.begin(client, USAGE_URL)) {
+  if (!http.begin(client, provider_url(p))) {
     r.status = NET_ERR_TLS;
     return r;
   }
@@ -75,4 +75,8 @@ NetResult kimi_fetch_usage(const char* api_key, uint32_t timeout_ms) {
   http.end();
   if (r.body.length() == 0) r.status = NET_ERR_BODY;
   return r;
+}
+
+NetResult kimi_fetch_usage(const char* api_key, uint32_t timeout_ms) {
+  return net_fetch_usage(PROVIDER_KIMI, api_key, timeout_ms);
 }

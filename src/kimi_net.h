@@ -1,5 +1,6 @@
 #pragma once
 #include <Arduino.h>
+#include "provider.h"
 
 enum NetStatus : uint8_t {
   NET_OK = 0,
@@ -26,6 +27,9 @@ bool net_time_wait(uint32_t timeout_ms);
 // 当前系统时间是否为有效 UTC（NTP 已对时）
 bool net_time_valid();
 
-// GET https://api.kimi.com/coding/v1/usages
-// 对时有效 → setCACert(ROOT_CA_PEM) 严格校验；对时无效 → setInsecure() 降级。
+// GET 对应 provider 的用量接口（URL 与 CA 按 provider 选择）。
+// 对时有效 → setCACert(对应根证书) 严格校验；对时无效 → setInsecure() 降级。
+NetResult net_fetch_usage(Provider p, const char* api_key, uint32_t timeout_ms);
+
+// 兼容包装：等价 net_fetch_usage(PROVIDER_KIMI, ...)。旧调用点逐步迁移。
 NetResult kimi_fetch_usage(const char* api_key, uint32_t timeout_ms);
