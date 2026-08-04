@@ -51,12 +51,28 @@ button{width:100%;margin-top:20px;padding:12px;background:#0078d4;color:#fff;bor
 .note{color:#666;font-size:13px;margin-top:6px}
 </style></head><body><h1>Kimi 用量显示器配置</h1>)HTML";
 
+// HTML 转义：& 必须最先替换。
+static String html_escape(const String& s) {
+  String out;
+  out.reserve(s.length());
+  for (size_t i = 0; i < s.length(); i++) {
+    switch (s[i]) {
+      case '&': out += "&amp;"; break;
+      case '<': out += "&lt;"; break;
+      case '>': out += "&gt;"; break;
+      case '"': out += "&quot;"; break;
+      default: out += s[i];
+    }
+  }
+  return out;
+}
+
 // 扫描周边 WiFi，返回 <option> 列表。调用前需已处于 WIFI_AP_STA 模式。
 static String scan_ssid_options() {
   int n = WiFi.scanNetworks();
   String opts;
   for (int i = 0; i < n; i++) {
-    opts += "<option value=\"" + WiFi.SSID(i) + "\">";
+    opts += "<option value=\"" + html_escape(WiFi.SSID(i)) + "\">";
   }
   WiFi.scanDelete();
   return opts;
