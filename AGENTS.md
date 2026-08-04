@@ -35,7 +35,9 @@ ESP32-2432S028（CYD）Kimi Coding Plan 用量显示器。设备连 WiFi 直连 
 |---|---|
 | `GET:CONFIG` | 查看配置（key 遮蔽） |
 | `SET:WIFI:<ssid>:<pass>` | 改 WiFi |
-| `SET:KEY:<apikey>` | 改 API Key |
+| `SET:KEY:<apikey>` | 改 Kimi API Key |
+| `SET:MMKEY:<apikey>` | 改 MiniMax API Key |
+| `SET:PROVIDER:<kimi\|minimax\|both>` | 切换服务商模式 |
 | `SET:INTERVAL:<30-3600>` | 改刷新间隔 |
 | `REFRESH` | 立即拉取 |
 | `GET:USAGE` | 提示看屏幕 |
@@ -53,6 +55,11 @@ ESP32-2432S028（CYD）Kimi Coding Plan 用量显示器。设备连 WiFi 直连 
 - [ ] 按住 BOOT 5 秒：屏幕倒数，松手取消，按住到底则擦除配置重启进 Setup
 - [ ] 串口 `GET:CONFIG` 返回遮蔽后的 key；`SET:INTERVAL:120` 生效
 - [ ] 用量显示数字与桌面端工具一致
+- [ ] both 模式配网：两 key 分别失败/成功的回显正确
+- [ ] both 模式主界面：标题正确、点击切换、切换后 Fetching→数据
+- [ ] 单 minimax 模式：与 kimi 单模式行为一致
+- [ ] 旧配置升级：烧新固件后不丢配置、默认 kimi 模式
+- [ ] MiniMax 数字与桌面端一致
 
 ## 目录说明
 

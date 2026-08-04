@@ -1,19 +1,21 @@
-# esp32-2432s028-kimi-usage
+# esp32-cyd-llm-usage
 
 [中文文档](README.zh-CN.md)
 
-Standalone Kimi Coding Plan usage monitor on the ESP32-2432S028 (Cheap Yellow Display / CYD). The device connects to WiFi and calls the Kimi API directly — no PC required.
+Standalone Kimi Coding Plan + MiniMax usage monitor on the ESP32-2432S028 (Cheap Yellow Display / CYD). The device connects to WiFi and calls the provider API directly — no PC required. Pick Kimi, MiniMax, or both; in both mode, tap the screen to switch views.
 
 ## Features
 
 - Weekly quota ring (usage %, used/limit numbers, reset countdown)
 - 5-hour window progress bar (used/limit + countdown)
+- MiniMax provider support alongside Kimi (percent-based quota mapping)
+- Provider mode `kimi` / `minimax` / `both`; tap-to-switch views in both mode (edge-detected, 300 ms debounce), each provider keeps its own data slot and error state
 - Color coding by usage: <70% green / 70–90% yellow / >90% red
-- Phone-based captive portal setup (Chinese web form); WiFi + API key are verified before anything is saved; config persists in NVS
+- Phone-based captive portal setup (Chinese web form); WiFi + API key are verified per provider before anything is saved; config persists in NVS
 - Offline resilience: stale data turns grey with an age label, auto-reconnect, exponential backoff on API failures
 - Invalid key (401/498) full-screen notice; hold BOOT 5s to wipe config and re-enter setup
 - Serial backdoor for debugging (read config, change key, force refresh, etc.)
-- Pure logic separated from hardware: 29 host-side unit tests, no device needed
+- Pure logic separated from hardware: 45 host-side unit tests, no device needed
 
 ## Hardware
 
@@ -42,20 +44,22 @@ On Linux/macOS use `.venv/bin/pio` instead, and set `upload_port`/`monitor_port`
 
 1. On first boot (or after a config wipe) the device enters Setup mode and shows hotspot details on screen
 2. Connect your phone to the `CYD-Kimi-Setup` hotspot (password `kimisetup`); the config page should pop up automatically (or open 192.168.4.1)
-3. Fill in WiFi credentials, Kimi API key, and refresh interval (30–3600 s), then save
-4. The device verifies WiFi + API key on the spot and only persists the config if both pass, then reboots
+3. Pick the provider mode (`kimi` / `minimax` / `both`), fill in WiFi credentials, the API key(s) for the chosen provider(s), and refresh interval (30–3600 s), then save
+4. The device verifies WiFi + each required API key on the spot and only persists the config if all pass, then reboots
 
 ## Changing Configuration Later
 
 **Via serial** (keeps other settings, fastest):
 
 ```powershell
-python scripts/send_command.py "SET:KEY:sk-new-key"      --port COM7
-python scripts/send_command.py "SET:WIFI:new-ssid:pass"  --port COM7
-python scripts/send_command.py "REBOOT"                  --port COM7  # recommended after SET:WIFI
+python scripts/send_command.py "SET:KEY:sk-new-key"        --port COM7
+python scripts/send_command.py "SET:MMKEY:mm-new-key"      --port COM7
+python scripts/send_command.py "SET:PROVIDER:both"         --port COM7  # kimi | minimax | both
+python scripts/send_command.py "SET:WIFI:new-ssid:pass"    --port COM7
+python scripts/send_command.py "REBOOT"                    --port COM7  # recommended after SET:WIFI / SET:PROVIDER
 ```
 
-A new API key takes effect immediately; send `REBOOT` after `SET:WIFI` to reconnect on the new network.
+A new API key takes effect immediately; send `REBOOT` after `SET:WIFI` to reconnect on the new network, and after `SET:PROVIDER` to re-fetch with the new mode.
 
 **Via BOOT button** (full re-provisioning): hold BOOT for 5 s until the on-screen countdown finishes — the config is wiped and the device reboots into Setup mode (release early to cancel). Then repeat the phone setup flow.
 
@@ -63,9 +67,11 @@ A new API key takes effect immediately; send `REBOOT` after `SET:WIFI` to reconn
 
 | Command | Action |
 |---|---|
-| `GET:CONFIG` | Show config (API key masked) |
+| `GET:CONFIG` | Show config (API keys masked, includes provider mode) |
 | `SET:WIFI:<ssid>:<pass>` | Change WiFi |
-| `SET:KEY:<apikey>` | Change API key |
+| `SET:KEY:<apikey>` | Change Kimi API key |
+| `SET:MMKEY:<apikey>` | Change MiniMax API key |
+| `SET:PROVIDER:<kimi\|minimax\|both>` | Switch provider mode |
 | `SET:INTERVAL:<30-3600>` | Change refresh interval |
 | `REFRESH` | Fetch immediately |
 | `GET:USAGE` | Tells you to look at the screen |
@@ -76,7 +82,7 @@ A Python client is included: `python scripts/send_command.py "GET:CONFIG" --port
 
 ## Unit Tests
 
-Pure logic (JSON parsing / formatting / color levels / command parsing / config validation / retry backoff) runs on the host — no hardware required:
+Pure logic (JSON parsing per provider / formatting / color levels / command parsing / config validation / retry backoff) runs on the host — no hardware required:
 
 ```powershell
 .venv\Scripts\pio.exe test -e native   # needs g++ (e.g. scoop install mingw-winlibs)
@@ -86,7 +92,7 @@ Pure logic (JSON parsing / formatting / color levels / command parsing / config 
 
 - `lib/core/` — pure logic (native-testable)
 - `src/` — hardware layer (display / kimi_net / portal / config_store / serial_console / main)
-- `test/` — 7 native test suites
+- `test/` — 9 native test suites
 - `scripts/` — Windows build fix + serial client
 - `docs/` — design spec and implementation plan
 

@@ -1,5 +1,5 @@
 [project]
-name = "esp32-2432s028-kimi-usage"
+name = "esp32-cyd-llm-usage"
 version = "0.1.0"
 requires-python = ">=3.11"
 dependencies = [
