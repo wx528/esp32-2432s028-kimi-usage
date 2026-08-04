@@ -1,7 +1,6 @@
 # ESP32-2432S028 Kimi 用量显示器 — 设计文档
 
 日期：2026-08-04
-项目路径：`D:\Developer\Hardware\esp32-2432s028-kimi-usage`
 
 ## 目标
 
@@ -173,9 +172,9 @@ PlatformIO `test/` 目录 + `native` 环境，`pio test -e native` 在 PC 上运
 
 ## 烧录注意
 
-沿用 `esp32-2432s028-list-display-scroll` 项目的经验：这块板子自动下载电路不起作用，需先按住 BOOT，运行上传命令，见到 `Connecting.....` 后松开 BOOT，上传成功后按 RST 才能进入正常运行模式。此流程写入 `AGENTS.md`。
+实操经验：这块板子自动下载电路不起作用，需先按住 BOOT，运行上传命令，见到 `Connecting.....` 后松开 BOOT，上传成功后按 RST 才能进入正常运行模式。此流程写入 `AGENTS.md`。
 
 ## 参考
 
-- 现有硬件项目：`D:\Developer\Hardware\esp32-2432s028-list-display-scroll`（TFT_eSPI 引脚配置、局部重绘思路、烧录流程）
-- 桌面挂机版：`D:\Developer\GitHub\kimi-usage-widget`（`windows/kimi_client.py` 的 API 字段解析与倒计时格式化逻辑）
+- 同系列 CYD 硬件项目（TFT_eSPI 引脚配置、局部重绘思路、烧录流程）
+- 桌面端 Kimi 用量工具的 API 字段解析与倒计时格式化逻辑

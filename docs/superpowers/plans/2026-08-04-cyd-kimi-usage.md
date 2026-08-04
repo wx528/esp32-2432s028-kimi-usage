@@ -10,7 +10,7 @@
 
 **Spec:** `docs/superpowers/specs/2026-08-04-cyd-kimi-usage-design.md`
 
-**项目根目录:** `D:\Developer\Hardware\esp32-2432s028-kimi-usage`（下称 `$root`）。git 仓库已初始化，已有 `.gitignore`（含 `.pio/`、`.venv/`、`.superpowers/`）和已提交的设计文档。
+**项目根目录:** 本仓库根目录（下称 `$root`）。git 仓库已初始化，已有 `.gitignore`（含 `.pio/`、`.venv/`、`.superpowers/`）和已提交的设计文档。
 
 ## 文件结构
 
@@ -359,7 +359,7 @@ git commit -m "feat(core): add ISO8601 to epoch parser"
 - Create: `lib/core/src/usage_parser.cpp`
 - Test: `test/test_usage_parser/main.cpp`
 
-- [ ] **Step 1: 写失败测试 `test/test_usage_parser/main.cpp`（用例覆盖 kimi-usage-widget 的同款数据）**
+- [ ] **Step 1: 写失败测试 `test/test_usage_parser/main.cpp`（用例覆盖桌面端工具的同款数据）**
 
 ```cpp
 #include <unity.h>
@@ -2465,7 +2465,7 @@ ESP32-2432S028（CYD）Kimi Coding Plan 用量显示器。设备连 WiFi 直连 
 - [ ] 断电重启：自动连 WiFi 并显示，不用重配
 - [ ] 按住 BOOT 5 秒：屏幕倒数，松手取消，按住到底则擦除配置重启进 Setup
 - [ ] 串口 `GET:CONFIG` 返回遮蔽后的 key；`SET:INTERVAL:120` 生效
-- [ ] 用量显示数字与 kimi-usage-widget 桌面端一致
+- [ ] 用量显示数字与桌面端工具一致
 
 ## 目录说明
 

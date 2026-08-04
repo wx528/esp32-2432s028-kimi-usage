@@ -52,7 +52,7 @@ ESP32-2432S028（CYD）Kimi Coding Plan 用量显示器。设备连 WiFi 直连 
 - [ ] 断电重启：自动连 WiFi 并显示，不用重配
 - [ ] 按住 BOOT 5 秒：屏幕倒数，松手取消，按住到底则擦除配置重启进 Setup
 - [ ] 串口 `GET:CONFIG` 返回遮蔽后的 key；`SET:INTERVAL:120` 生效
-- [ ] 用量显示数字与 kimi-usage-widget 桌面端一致
+- [ ] 用量显示数字与桌面端工具一致
 
 ## 目录说明
 
