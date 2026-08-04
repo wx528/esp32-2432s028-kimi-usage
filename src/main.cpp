@@ -9,6 +9,7 @@
 #include "display.h"
 #include "portal.h"
 #include "retry_policy.h"
+#include "serial_console.h"
 
 static const char* AP_NAME = "CYD-Kimi-Setup";
 static const char* AP_PASS = "kimisetup";
@@ -100,12 +101,28 @@ static void fetch_and_update() {
   redraw();
 }
 
+static void hook_refresh() {
+  if (s_state == STATE_RUNNING) fetch_and_update();
+}
+static void hook_config_changed() {
+  config_store_load(&s_cfg);
+  s_next_interval_sec = s_cfg.refresh_interval;
+}
+static void hook_reset_config() {
+  config_store_clear();
+  delay(200);
+  ESP.restart();
+}
+
 void setup() {
   Serial.begin(115200);
   delay(100);
   Serial.println("CYD Kimi Usage Ready");
 
   display_init(&tft);
+
+  SerialHooks hooks{hook_refresh, hook_config_changed, hook_reset_config};
+  serial_console_begin(hooks);
 
   if (!config_store_is_configured()) {
     enter_portal(); // 不返回（内部 restart）
@@ -117,6 +134,7 @@ void setup() {
 }
 
 void loop() {
+  serial_console_poll();
   uint32_t now = millis();
 
   if (s_state == STATE_CONNECTING) {
