@@ -76,7 +76,3 @@ NetResult net_fetch_usage(Provider p, const char* api_key, uint32_t timeout_ms) 
   if (r.body.length() == 0) r.status = NET_ERR_BODY;
   return r;
 }
-
-NetResult kimi_fetch_usage(const char* api_key, uint32_t timeout_ms) {
-  return net_fetch_usage(PROVIDER_KIMI, api_key, timeout_ms);
-}
