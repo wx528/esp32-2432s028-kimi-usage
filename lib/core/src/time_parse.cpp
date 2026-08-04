@@ -37,3 +37,8 @@ uint32_t parse_iso8601_epoch(const char* s) {
   if (secs < 0) return 0;
   return (uint32_t)secs;
 }
+
+uint32_t ms_epoch_to_sec(int64_t ms) {
+  if (ms <= 0) return 0;
+  return (uint32_t)(ms / 1000);
+}

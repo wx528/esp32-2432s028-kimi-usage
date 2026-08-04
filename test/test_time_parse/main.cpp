@@ -21,6 +21,16 @@ void test_garbage_returns_zero() {
   TEST_ASSERT_EQUAL_UINT32(0UL, parse_iso8601_epoch("2026-07-21"));
 }
 
+void test_ms_epoch_to_sec() {
+  TEST_ASSERT_EQUAL_UINT32(1785772800UL, ms_epoch_to_sec(1785772800000LL));
+  TEST_ASSERT_EQUAL_UINT32(1786291200UL, ms_epoch_to_sec(1786291200000LL));
+}
+
+void test_ms_epoch_to_sec_nonpositive_is_zero() {
+  TEST_ASSERT_EQUAL_UINT32(0UL, ms_epoch_to_sec(0));
+  TEST_ASSERT_EQUAL_UINT32(0UL, ms_epoch_to_sec(-5));
+}
+
 int main(int argc, char** argv) {
   (void)argc; (void)argv;
   UNITY_BEGIN();
@@ -28,5 +38,7 @@ int main(int argc, char** argv) {
   RUN_TEST(test_iso8601_without_fraction);
   RUN_TEST(test_epoch_boundary);
   RUN_TEST(test_garbage_returns_zero);
+  RUN_TEST(test_ms_epoch_to_sec);
+  RUN_TEST(test_ms_epoch_to_sec_nonpositive_is_zero);
   return UNITY_END();
 }
