@@ -41,6 +41,7 @@ static long data_age_seconds() {
 
 static void redraw() {
   DisplayState st;
+  memset(&st, 0, sizeof(st));
   st.has_data = s_has_data;
   st.data = s_data;
   st.stale = s_has_data && (data_age_seconds() > s_next_interval_sec + 15);

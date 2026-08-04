@@ -13,6 +13,8 @@ struct DisplayState {
   bool wifi_ok;
   const char* status_msg; // 状态栏文字，如 "WiFi LOST"/"API TIMEOUT"/"BAD RESPONSE"
   bool key_invalid;     // 401/498 → 全屏错误页
+  const char* title;    // 大标题，如 "KIMI USAGE" / "MINIMAX USAGE"
+  bool switch_hint;     // both 模式：状态栏提示可点击切换
 };
 
 void display_init(TFT_eSPI* tft);

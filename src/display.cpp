@@ -1,5 +1,6 @@
 #include "display.h"
 #include <stdio.h>
+#include <string.h>
 #include <time.h>
 #include <math.h>
 
@@ -26,22 +27,24 @@ void display_init(TFT_eSPI* tft) {
   digitalWrite(TFT_BL, HIGH);
 }
 
-static void draw_title(TFT_eSPI* tft) {
+static const char* STATIC_TITLE = "USAGE MONITOR";
+
+static void draw_title(TFT_eSPI* tft, const char* title) {
   tft->setTextColor(TFT_CYAN, BG);
   tft->setTextDatum(MC_DATUM);
-  tft->drawString("KIMI USAGE", tft->width() / 2, 18, 4);
+  tft->drawString(title, tft->width() / 2, 18, 4);
 }
 
 void display_draw_connecting(TFT_eSPI* tft) {
   tft->fillScreen(BG);
-  draw_title(tft);
+  draw_title(tft, STATIC_TITLE);
   tft->setTextColor(TFT_WHITE, BG);
   tft->drawString("Connecting WiFi...", 120, 160, 2);
 }
 
 void display_draw_portal_hint(TFT_eSPI* tft, const char* ap_name, const char* ap_pass) {
   tft->fillScreen(BG);
-  draw_title(tft);
+  draw_title(tft, STATIC_TITLE);
   tft->setTextColor(TFT_WHITE, BG);
   tft->drawString("Setup mode", 120, 60, 2);
   tft->setTextColor(TFT_YELLOW, BG);
@@ -55,7 +58,7 @@ void display_draw_portal_hint(TFT_eSPI* tft, const char* ap_name, const char* ap
 
 void display_draw_invalid_key(TFT_eSPI* tft) {
   tft->fillScreen(BG);
-  draw_title(tft);
+  draw_title(tft, STATIC_TITLE);
   tft->setTextColor(TFT_RED, BG);
   tft->drawString("INVALID API KEY", 120, 120, 4);
   tft->setTextColor(TFT_WHITE, BG);
@@ -100,7 +103,7 @@ static void draw_ring(TFT_eSPI* tft, int percent, UsageLevel lv) {
 
 void display_draw_main(TFT_eSPI* tft, const DisplayState& st) {
   tft->fillScreen(BG);
-  draw_title(tft);
+  draw_title(tft, st.title ? st.title : STATIC_TITLE);
 
   if (st.key_invalid) { display_draw_invalid_key(tft); return; }
 
@@ -171,6 +174,10 @@ void display_draw_main(TFT_eSPI* tft, const DisplayState& st) {
     snprintf(status, sizeof(status), "%s%s  %s", st.status_msg, clk, age);
   } else {
     snprintf(status, sizeof(status), "%s%s  %s", wifi, clk, age);
+  }
+  if (st.switch_hint) {
+    size_t len = strlen(status);
+    snprintf(status + len, sizeof(status) - len, "%s", len > 0 && status[len-1] != ' ' ? "  tap: switch" : "tap: switch");
   }
   tft->setTextColor(st.wifi_ok ? TFT_DARKGREY : TFT_RED, BG);
   tft->setTextDatum(ML_DATUM);
