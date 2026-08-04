@@ -58,6 +58,27 @@ void test_unknown_and_malformed() {
   TEST_ASSERT_FALSE(parse_command("SET:WIFI:onlyssid", &c)); // 缺密码段
 }
 
+void test_set_provider() {
+  Command c;
+  TEST_ASSERT_TRUE(parse_command("SET:PROVIDER:kimi", &c));
+  TEST_ASSERT_EQUAL(CMD_SET_PROVIDER, c.type);
+  TEST_ASSERT_EQUAL(MODE_KIMI, c.provider_mode);
+  TEST_ASSERT_TRUE(parse_command("SET:PROVIDER:minimax", &c));
+  TEST_ASSERT_EQUAL(MODE_MINIMAX, c.provider_mode);
+  TEST_ASSERT_TRUE(parse_command("SET:PROVIDER:both", &c));
+  TEST_ASSERT_EQUAL(MODE_BOTH, c.provider_mode);
+  TEST_ASSERT_FALSE(parse_command("SET:PROVIDER:openai", &c));
+  TEST_ASSERT_FALSE(parse_command("SET:PROVIDER:", &c));
+}
+
+void test_set_mmkey() {
+  Command c;
+  TEST_ASSERT_TRUE(parse_command("SET:MMKEY:mm-abcdef123456", &c));
+  TEST_ASSERT_EQUAL(CMD_SET_MMKEY, c.type);
+  TEST_ASSERT_EQUAL_STRING("mm-abcdef123456", c.mmkey);
+  TEST_ASSERT_FALSE(parse_command("SET:MMKEY:", &c));
+}
+
 int main(int argc, char** argv) {
   (void)argc; (void)argv;
   UNITY_BEGIN();
@@ -67,5 +88,7 @@ int main(int argc, char** argv) {
   RUN_TEST(test_set_wifi_password_may_contain_colons);
   RUN_TEST(test_set_wifi_open_network_empty_password_ok);
   RUN_TEST(test_unknown_and_malformed);
+  RUN_TEST(test_set_provider);
+  RUN_TEST(test_set_mmkey);
   return UNITY_END();
 }

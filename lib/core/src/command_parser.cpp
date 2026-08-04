@@ -11,8 +11,9 @@ static void copy_str(char* dst, int dst_size, const char* src) {
 bool parse_command(const char* line, Command* out) {
   if (!line || !out || !*line) return false;
   out->type = CMD_UNKNOWN;
-  out->ssid[0] = out->password[0] = out->key[0] = '\0';
+  out->ssid[0] = out->password[0] = out->key[0] = out->mmkey[0] = '\0';
   out->interval = 0;
+  out->provider_mode = MODE_KIMI;
 
   if (strcmp(line, "GET:CONFIG") == 0)  { out->type = CMD_GET_CONFIG; return true; }
   if (strcmp(line, "GET:USAGE") == 0)   { out->type = CMD_GET_USAGE; return true; }
@@ -37,6 +38,24 @@ bool parse_command(const char* line, Command* out) {
     if (v < 30 || v > 3600) return false;
     out->interval = v;
     out->type = CMD_SET_INTERVAL;
+    return true;
+  }
+
+  if (strncmp(line, "SET:PROVIDER:", 13) == 0) {
+    const char* v = line + 13;
+    if (strcmp(v, "kimi") == 0)    out->provider_mode = MODE_KIMI;
+    else if (strcmp(v, "minimax") == 0) out->provider_mode = MODE_MINIMAX;
+    else if (strcmp(v, "both") == 0)    out->provider_mode = MODE_BOTH;
+    else return false;
+    out->type = CMD_SET_PROVIDER;
+    return true;
+  }
+
+  if (strncmp(line, "SET:MMKEY:", 10) == 0) {
+    const char* key = line + 10;
+    if (!*key) return false;
+    copy_str(out->mmkey, sizeof(out->mmkey), key);
+    out->type = CMD_SET_MMKEY;
     return true;
   }
 
