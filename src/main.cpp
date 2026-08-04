@@ -107,6 +107,8 @@ static void hook_refresh() {
 static void hook_config_changed() {
   config_store_load(&s_cfg);
   s_next_interval_sec = s_cfg.refresh_interval;
+  s_key_invalid = false;
+  s_api_fail_count = 0;
 }
 static void hook_reset_config() {
   config_store_clear();
