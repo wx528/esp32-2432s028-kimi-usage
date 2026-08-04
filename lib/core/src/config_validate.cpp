@@ -5,7 +5,9 @@
 ConfigError validate_config(const DeviceConfig* cfg) {
   if (!cfg) return CFG_ERR_NO_SSID;
   if (cfg->ssid[0] == '\0') return CFG_ERR_NO_SSID;
-  if (cfg->api_key[0] == '\0') return CFG_ERR_NO_KEY;
+  if (cfg->provider_mode > MODE_BOTH) return CFG_ERR_BAD_MODE;
+  if (cfg->provider_mode != MODE_MINIMAX && cfg->api_key[0] == '\0') return CFG_ERR_NO_KEY;
+  if (cfg->provider_mode != MODE_KIMI && cfg->minimax_key[0] == '\0') return CFG_ERR_NO_KEY;
   if (cfg->refresh_interval < 30 || cfg->refresh_interval > 3600) return CFG_ERR_BAD_INTERVAL;
   return CFG_OK;
 }
