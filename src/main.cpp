@@ -1,6 +1,7 @@
 #include <TFT_eSPI.h>
 #include "config_store.h"
 #include "kimi_net.h"
+#include "display.h"
 
 TFT_eSPI tft = TFT_eSPI();
 
