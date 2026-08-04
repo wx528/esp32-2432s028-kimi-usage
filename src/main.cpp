@@ -186,10 +186,13 @@ static void check_touch_switch() {
   if (s_state != STATE_RUNNING) return;
   if (s_cfg.provider_mode != MODE_BOTH) return;
   static uint32_t last_tap = 0;
-  if (!s_touch.touched()) return;
+  static bool waiting_release = false;
+  if (!s_touch.touched()) { waiting_release = false; return; }
+  if (waiting_release) return;
   uint32_t now = millis();
   if (now - last_tap < TOUCH_DEBOUNCE_MS) return;
   last_tap = now;
+  waiting_release = true;
   switch_provider();
 }
 
