@@ -17,6 +17,8 @@ static const uint32_t PORTAL_TIMEOUT_MS = 10UL * 60 * 1000;
 static const uint32_t WIFI_CONNECT_TIMEOUT_MS = 20UL * 1000;
 static const uint32_t NTP_WAIT_MS = 8UL * 1000;
 static const int WIFI_FAIL_TO_PORTAL = 30;
+static const uint8_t BOOT_PIN = 0;
+static const uint32_t BOOT_HOLD_MS = 5000;
 
 static TFT_eSPI tft;
 static AppState s_state = STATE_BOOT;
@@ -118,6 +120,7 @@ static void hook_reset_config() {
 
 void setup() {
   Serial.begin(115200);
+  pinMode(BOOT_PIN, INPUT_PULLUP);
   delay(100);
   Serial.println("CYD Kimi Usage Ready");
 
@@ -135,8 +138,41 @@ void setup() {
   enter_connecting();
 }
 
+static void check_boot_long_press() {
+  if (s_state != STATE_RUNNING && s_state != STATE_CONNECTING) return;
+  static uint32_t press_start = 0;
+  if (digitalRead(BOOT_PIN) == LOW) {
+    if (press_start == 0) press_start = millis();
+    uint32_t held = millis() - press_start;
+    if (held >= BOOT_HOLD_MS) {
+      Serial.println("OK:RESET (boot button)");
+      config_store_clear();
+      tft.fillScreen(TFT_BLACK);
+      tft.setTextColor(TFT_RED, TFT_BLACK);
+      tft.setTextDatum(MC_DATUM);
+      tft.drawString("Config erased", 120, 150, 2);
+      delay(1500);
+      ESP.restart();
+    } else if (held > 500) { // 按了 0.5 秒开始给倒数提示
+      int remain = (int)((BOOT_HOLD_MS - held) / 1000) + 1;
+      tft.fillRect(0, 280, 240, 20, TFT_BLACK);
+      tft.setTextColor(TFT_YELLOW, TFT_BLACK);
+      tft.setTextDatum(MC_DATUM);
+      char msg[24];
+      snprintf(msg, sizeof(msg), "Release to cancel %d", remain);
+      tft.drawString(msg, 120, 290, 2);
+    }
+  } else {
+    if (press_start != 0) {
+      press_start = 0;
+      redraw(); // 松开恢复显示
+    }
+  }
+}
+
 void loop() {
   serial_console_poll();
+  check_boot_long_press();
   uint32_t now = millis();
 
   if (s_state == STATE_CONNECTING) {
