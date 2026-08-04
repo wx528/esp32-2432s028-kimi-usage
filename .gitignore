@@ -1,0 +1,6 @@
+.pio/
+.vscode/
+.venv/
+.superpowers/
+*.pyc
+__pycache__/
