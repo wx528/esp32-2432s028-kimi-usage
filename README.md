@@ -1,5 +1,7 @@
 # esp32-cyd-llm-usage
 
+[![CI](https://github.com/wx528/esp32-cyd-llm-usage/actions/workflows/ci.yml/badge.svg)](https://github.com/wx528/esp32-cyd-llm-usage/actions/workflows/ci.yml)
+
 [中文文档](README.zh-CN.md)
 
 Standalone Kimi Coding Plan + MiniMax usage monitor on the ESP32-2432S028 (Cheap Yellow Display / CYD). The device connects to WiFi and calls the provider API directly — no PC required. Pick Kimi, MiniMax, or both; in both mode, tap the screen to switch views.

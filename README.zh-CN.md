@@ -1,5 +1,7 @@
 # esp32-cyd-llm-usage
 
+[![CI](https://github.com/wx528/esp32-cyd-llm-usage/actions/workflows/ci.yml/badge.svg)](https://github.com/wx528/esp32-cyd-llm-usage/actions/workflows/ci.yml)
+
 [English README](README.md)
 
 在 ESP32-2432S028（Cheap Yellow Display / CYD）上独立显示 Kimi Coding Plan 与 MiniMax 用量。设备直连 WiFi 调用服务商 API，无需电脑挂机。支持 kimi / minimax / both 三种模式，both 模式下点击屏幕即可切换视图。
