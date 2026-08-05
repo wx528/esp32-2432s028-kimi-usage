@@ -12,3 +12,7 @@ UsageLevel usage_level(int percent) {
   if (percent <= 90) return LEVEL_WARNING;
   return LEVEL_CRITICAL;
 }
+
+uint8_t rotation_next(uint8_t r) {
+  return r < 3 ? r + 1 : 0;
+}

@@ -19,10 +19,21 @@ void test_level_thresholds() {
   TEST_ASSERT_EQUAL(LEVEL_CRITICAL, usage_level(100));
 }
 
+void test_rotation_next() {
+  TEST_ASSERT_EQUAL_UINT8(1, rotation_next(0));
+  TEST_ASSERT_EQUAL_UINT8(2, rotation_next(1));
+  TEST_ASSERT_EQUAL_UINT8(3, rotation_next(2));
+  TEST_ASSERT_EQUAL_UINT8(0, rotation_next(3)); // 循环
+  TEST_ASSERT_EQUAL_UINT8(0, rotation_next(4)); // 越界 → 0
+  TEST_ASSERT_EQUAL_UINT8(0, rotation_next(7));
+  TEST_ASSERT_EQUAL_UINT8(0, rotation_next(255));
+}
+
 int main(int argc, char** argv) {
   (void)argc; (void)argv;
   UNITY_BEGIN();
   RUN_TEST(test_usage_percent_clamps_0_100);
   RUN_TEST(test_level_thresholds);
+  RUN_TEST(test_rotation_next);
   return UNITY_END();
 }
