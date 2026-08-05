@@ -44,6 +44,7 @@ struct ProviderSlot {
 };
 static ProviderSlot s_slots[2];          // 下标即 Provider 枚举值
 static uint8_t s_active = PROVIDER_KIMI; // 当前显示/定时拉取的 provider
+static uint8_t s_rotation = 0; // 显示方向 0-3
 static SPIClass s_touch_spi(HSPI);
 static XPT2046_Touchscreen s_touch(TOUCH_CS, TOUCH_IRQ);
 static int s_wifi_fail_count = 0;
@@ -157,10 +158,12 @@ void setup() {
   delay(100);
   Serial.println("CYD Kimi Usage Ready");
 
-  display_init(&tft, 0);
+  config_store_load(&s_cfg);          // 无配置时 s_cfg 保持零值（rotation=0）
+  s_rotation = s_cfg.rotation;
+  display_init(&tft, s_rotation);
   s_touch_spi.begin(TOUCH_SCK, TOUCH_MISO, TOUCH_MOSI, TOUCH_CS);
   s_touch.begin(s_touch_spi);
-  s_touch.setRotation(0);
+  s_touch.setRotation(s_rotation);
 
   SerialHooks hooks{hook_refresh, hook_config_changed, hook_reset_config};
   serial_console_begin(hooks);
@@ -169,7 +172,6 @@ void setup() {
     enter_portal(); // 不返回（内部 restart）
     return;
   }
-  config_store_load(&s_cfg);
   s_active = s_cfg.provider_mode == MODE_MINIMAX ? PROVIDER_MINIMAX : PROVIDER_KIMI;
   s_next_interval_sec = s_cfg.refresh_interval;
   enter_connecting();
@@ -196,6 +198,16 @@ static void check_touch_switch() {
   switch_provider();
 }
 
+static void cycle_rotation() {
+  s_rotation = rotation_next(s_rotation);
+  s_cfg.rotation = s_rotation;
+  config_store_save(&s_cfg);
+  Serial.printf("OK:ROTATION:%d\n", s_rotation * 90);
+  display_rotate(&tft, s_rotation);
+  s_touch.setRotation(s_rotation);
+  redraw();
+}
+
 static void check_boot_long_press() {
   if (s_state != STATE_RUNNING && s_state != STATE_CONNECTING) return;
   static uint32_t press_start = 0;
@@ -208,22 +220,28 @@ static void check_boot_long_press() {
       tft.fillScreen(TFT_BLACK);
       tft.setTextColor(TFT_RED, TFT_BLACK);
       tft.setTextDatum(MC_DATUM);
-      tft.drawString("Config erased", 120, 150, 2);
+      tft.drawString("Config erased", tft.width() / 2, tft.height() / 2, 2);
       delay(1500);
       ESP.restart();
     } else if (held > 500) { // 按了 0.5 秒开始给倒数提示
       int remain = (int)((BOOT_HOLD_MS - held) / 1000) + 1;
-      tft.fillRect(0, 280, 240, 20, TFT_BLACK);
+      int16_t cw = tft.width(), ch = tft.height();
+      tft.fillRect(0, ch - 40, cw, 20, TFT_BLACK);
       tft.setTextColor(TFT_YELLOW, TFT_BLACK);
       tft.setTextDatum(MC_DATUM);
       char msg[24];
       snprintf(msg, sizeof(msg), "Release to cancel %d", remain);
-      tft.drawString(msg, 120, 290, 2);
+      tft.drawString(msg, cw / 2, ch - 30, 2);
     }
   } else {
     if (press_start != 0) {
+      uint32_t held = millis() - press_start;
       press_start = 0;
-      redraw(); // 松开恢复显示
+      if (held < 500) {
+        cycle_rotation(); // 短按：切换显示方向
+      } else {
+        redraw(); // 取消擦除倒数，恢复显示
+      }
     }
   }
 }
