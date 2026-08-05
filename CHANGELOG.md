@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.2.0] - 2026-08-05
 
 ### Added
 
@@ -13,6 +13,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Provider mode config (kimi / minimax / both) with per-provider pre-save verification in the portal
 - Tap-to-switch on the touchscreen in both mode (edge-detected, 300 ms debounce), per-provider RAM slots with independent error states
 - Serial commands `SET:PROVIDER` / `SET:MMKEY`; `GET:CONFIG` now returns `mmkey` + `mode`
+
+### Fixed
+
+- Portal rejects key/mode mismatch (e.g. MiniMax key filled but mode = kimi) with an explicit Chinese error instead of silently saving an unusable config
+- Touch switching uses edge detection so a held finger no longer flip-flops providers
+
+### Changed
+
+- Project renamed from esp32-2432s028-kimi-usage to esp32-cyd-llm-usage
 
 ## [0.1.0] - 2026-08-05
 
@@ -37,4 +46,5 @@ Initial release.
 - HTML-escape scanned SSIDs in the portal form (injection hardening)
 - Clear the key-invalid latch when config changes via the serial backdoor, so `SET:KEY` recovers fetching without a reboot
 
-[0.1.0]: https://github.com/wx528/esp32-2432s028-kimi-usage/releases/tag/v0.1.0
+[0.2.0]: https://github.com/wx528/esp32-cyd-llm-usage/releases/tag/v0.2.0
+[0.1.0]: https://github.com/wx528/esp32-cyd-llm-usage/releases/tag/v0.1.0
