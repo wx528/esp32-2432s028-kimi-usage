@@ -157,7 +157,7 @@ void setup() {
   delay(100);
   Serial.println("CYD Kimi Usage Ready");
 
-  display_init(&tft);
+  display_init(&tft, 0);
   s_touch_spi.begin(TOUCH_SCK, TOUCH_MISO, TOUCH_MOSI, TOUCH_CS);
   s_touch.begin(s_touch_spi);
   s_touch.setRotation(0);

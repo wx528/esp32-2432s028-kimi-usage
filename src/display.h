@@ -17,7 +17,8 @@ struct DisplayState {
   bool switch_hint;     // both 模式：状态栏提示可点击切换
 };
 
-void display_init(TFT_eSPI* tft);
+void display_init(TFT_eSPI* tft, uint8_t rotation);
+void display_rotate(TFT_eSPI* tft, uint8_t rotation); // 运行中切换方向（立即 setRotation）
 void display_draw_portal_hint(TFT_eSPI* tft, const char* ap_name, const char* ap_pass);
 void display_draw_connecting(TFT_eSPI* tft);
 void display_draw_invalid_key(TFT_eSPI* tft);
