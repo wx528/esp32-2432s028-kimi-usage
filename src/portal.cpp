@@ -131,6 +131,16 @@ static void handle_save() {
   c.refresh_interval = s_server->arg("interval").toInt();
   if (c.refresh_interval <= 0) c.refresh_interval = 60;
 
+  // 一致性检查：填了某家 key 但服务商没选它 → 明确报错，避免静默存成用不上的 key
+  if (c.provider_mode == MODE_KIMI && c.minimax_key[0] != '\0') {
+    send_form("你填了 MiniMax Key，但服务商选的是仅 Kimi——请改选「Kimi + MiniMax」或清空 MiniMax Key");
+    return;
+  }
+  if (c.provider_mode == MODE_MINIMAX && c.api_key[0] != '\0') {
+    send_form("你填了 Kimi Key，但服务商选的是仅 MiniMax——请改选「Kimi + MiniMax」或清空 Kimi Key");
+    return;
+  }
+
   ConfigError verr = validate_config(&c);
   if (verr != CFG_OK) {
     send_form(verr == CFG_ERR_BAD_INTERVAL ? "刷新间隔需在 30-3600 秒之间" : "请完整填写 WiFi 名称和所选服务商的 API Key");
