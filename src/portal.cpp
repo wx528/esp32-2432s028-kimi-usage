@@ -117,7 +117,8 @@ static void send_form(const String& err) {
 static void handle_root() { send_form(""); }
 
 static void handle_save() {
-  DeviceConfig c;
+  DeviceConfig c = {};
+  config_store_load(&c); // 保留表单没有的字段（如 rotation）
   strncpy(c.ssid, s_server->arg("ssid").c_str(), sizeof(c.ssid) - 1);
   c.ssid[sizeof(c.ssid) - 1] = '\0';
   strncpy(c.password, s_server->arg("pass").c_str(), sizeof(c.password) - 1);
