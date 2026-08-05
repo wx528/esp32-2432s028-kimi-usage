@@ -4,6 +4,7 @@
 #include <DNSServer.h>
 #include "kimi_net.h"
 #include "provider.h"
+#include "config_store.h"
 
 static WebServer* s_server = nullptr;
 static DNSServer* s_dns = nullptr;
