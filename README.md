@@ -1,6 +1,8 @@
 # esp32-cyd-llm-usage
 
 [![CI](https://github.com/wx528/esp32-cyd-llm-usage/actions/workflows/ci.yml/badge.svg)](https://github.com/wx528/esp32-cyd-llm-usage/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/github/license/wx528/esp32-cyd-llm-usage)](LICENSE)
+[![Release](https://img.shields.io/github/v/release/wx528/esp32-cyd-llm-usage)](https://github.com/wx528/esp32-cyd-llm-usage/releases)
 
 [中文文档](README.zh-CN.md)
 
