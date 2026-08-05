@@ -12,6 +12,7 @@ Standalone Kimi Coding Plan + MiniMax usage monitor on the ESP32-2432S028 (Cheap
 
 - Weekly quota ring (usage %, used/limit numbers, reset countdown)
 - 5-hour window progress bar (used/limit + countdown)
+- Four display orientations (0/90/180/270): short-press BOOT to cycle, persisted across reboots
 - MiniMax provider support alongside Kimi (percent-based quota mapping)
 - Provider mode `kimi` / `minimax` / `both`; tap-to-switch views in both mode (edge-detected, 300 ms debounce), each provider keeps its own data slot and error state
 - Color coding by usage: <70% green / 70–90% yellow / >90% red
@@ -19,7 +20,7 @@ Standalone Kimi Coding Plan + MiniMax usage monitor on the ESP32-2432S028 (Cheap
 - Offline resilience: stale data turns grey with an age label, auto-reconnect, exponential backoff on API failures
 - Invalid key (401/498) full-screen notice; hold BOOT 5s to wipe config and re-enter setup
 - Serial backdoor for debugging (read config, change key, force refresh, etc.)
-- Pure logic separated from hardware: 45 host-side unit tests, no device needed
+- Pure logic separated from hardware: 46 host-side unit tests, no device needed
 
 ## Hardware
 
@@ -65,7 +66,7 @@ python scripts/send_command.py "REBOOT"                    --port COM7  # recomm
 
 A new API key takes effect immediately; send `REBOOT` after `SET:WIFI` to reconnect on the new network, and after `SET:PROVIDER` to re-fetch with the new mode.
 
-**Via BOOT button** (full re-provisioning): hold BOOT for 5 s until the on-screen countdown finishes — the config is wiped and the device reboots into Setup mode (release early to cancel). Then repeat the phone setup flow.
+**Via BOOT button** (full re-provisioning): hold BOOT for 5 s until the on-screen countdown finishes — the config is wiped and the device reboots into Setup mode (release early to cancel). Then repeat the phone setup flow. A short press (<0.5 s) instead cycles the display orientation (0/90/180/270) and persists it — only the full 5 s hold wipes the config.
 
 ## Serial Backdoor (115200 baud, `\n`-terminated)
 
