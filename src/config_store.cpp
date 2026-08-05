@@ -13,6 +13,7 @@ bool config_store_load(DeviceConfig* cfg) {
   long interval = p.getLong("interval", 60);
   String mmkey = p.getString("mmkey", "");
   uint8_t mode = p.getUChar("mode", MODE_KIMI);
+  uint8_t rot = p.getUChar("rot", 0);
   p.end();
 
   strncpy(cfg->ssid, ssid.c_str(), sizeof(cfg->ssid) - 1);
@@ -25,6 +26,7 @@ bool config_store_load(DeviceConfig* cfg) {
   strncpy(cfg->minimax_key, mmkey.c_str(), sizeof(cfg->minimax_key) - 1);
   cfg->minimax_key[sizeof(cfg->minimax_key) - 1] = '\0';
   cfg->provider_mode = mode > MODE_BOTH ? MODE_KIMI : mode;
+  cfg->rotation = rot > 3 ? 0 : rot; // 脏数据兜底
   return cfg->ssid[0] != '\0' || cfg->api_key[0] != '\0';
 }
 
@@ -38,6 +40,7 @@ bool config_store_save(const DeviceConfig* cfg) {
   p.putLong("interval", cfg->refresh_interval);
   p.putString("mmkey", cfg->minimax_key);
   p.putUChar("mode", cfg->provider_mode);
+  p.putUChar("rot", cfg->rotation);
   p.end();
   return true;
 }

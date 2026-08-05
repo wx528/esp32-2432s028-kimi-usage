@@ -14,6 +14,7 @@ struct DeviceConfig {
   char minimax_key[128];  // MiniMax
   long refresh_interval;  // 秒，30-3600
   uint8_t provider_mode;  // ProviderMode
+  uint8_t rotation;       // 显示方向 0-3（TFT_eSPI setRotation 参数）
 };
 
 enum ConfigError : uint8_t {
